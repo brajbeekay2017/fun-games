@@ -1,0 +1,26 @@
+{
+  "name": "fun-games",
+  "version": "1.0.0",
+  "description": "Interactive multiplayer game platform",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd game-platform && npm run server",
+    "client": "cd game-platform && npm run client",
+    "install-all": "npm install && cd game-platform && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11",
+    "concurrently": "^8.2.2"
+  }
+}
