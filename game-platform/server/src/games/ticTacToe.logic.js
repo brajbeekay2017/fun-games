@@ -7,6 +7,7 @@ import { BOARD_SIZE, EMPTY_CELL } from '../../../shared/gameConstants.js';
  */
 export class TicTacToeGame {
   constructor(roomId, players = [], gameMode = 'multiplayer') {
+    this.gameType = 'tic-tac-toe';  // ✅ ADD THIS LINE
     this.roomId = roomId;
     this.players = players; // [playerId1, playerId2 or 'COMPUTER']
     this.gameMode = gameMode; // 'single-player' or 'multiplayer'
@@ -15,6 +16,8 @@ export class TicTacToeGame {
     this.winner = null;
     this.moves = [];
     this.difficulty = 'medium'; // 'easy', 'medium', 'hard'
+    this.status = 'waiting';  // ✅ ADD THIS LINE
+    this.scores = new Map();  // ✅ ADD THIS LINE
   }
 
   /**
@@ -35,7 +38,10 @@ export class TicTacToeGame {
     }
 
     // Validate it's the player's turn
-    if (this.players[this.currentPlayerIndex] !== playerId) {
+    const currentPlayer = this.players[this.currentPlayerIndex];
+    console.log(`👤 Current player: ${currentPlayer}, Making move: ${playerId}`);
+    
+    if (currentPlayer !== playerId) {
       return { success: false, error: 'Not your turn' };
     }
 
@@ -43,23 +49,35 @@ export class TicTacToeGame {
     const symbol = this.currentPlayerIndex === 0 ? 'X' : 'O';
     this.board[cellIndex] = symbol;
     this.moves.push({ playerId, cellIndex, symbol });
+    console.log(`✅ Move made: ${playerId} played ${symbol} at cell ${cellIndex}`);
 
     // Check for winner
     if (this.checkWinner()) {
       this.winner = playerId;
+      console.log(`🏆 Winner: ${playerId}`);
       return { success: true, gameOver: true, winner: this.winner };
     }
 
     // Check for draw (board full)
     if (this.board.every(cell => cell !== EMPTY_CELL)) {
+      console.log(`🤝 Draw - board full`);
       return { success: true, gameOver: true, winner: null, isDraw: true };
     }
 
     // Switch to next player
     this.currentPlayerIndex = 1 - this.currentPlayerIndex;
+    const nextPlayer = this.players[this.currentPlayerIndex];
+    console.log(`↪️ Next player: ${nextPlayer}`);
 
-    // Note: Computer move is NOW handled asynchronously in socket handler
-    return { success: true, gameOver: false, shouldComputerMove: this.gameMode === 'single-player' && this.players[this.currentPlayerIndex] === 'COMPUTER' };
+    // Check if computer should move
+    const shouldComputerMove = this.gameMode === 'single-player' && nextPlayer === 'COMPUTER';
+    console.log(`🤖 Should computer move? ${shouldComputerMove}`);
+
+    return { 
+      success: true, 
+      gameOver: false, 
+      shouldComputerMove 
+    };
   }
 
   /**
@@ -67,31 +85,47 @@ export class TicTacToeGame {
    * @returns {Object} Result of the computer move
    */
   computerMove() {
-    const computerMoveIndex = this.getComputerMoveIndex();
+    try {
+      const computerMoveIndex = this.getComputerMoveIndex();
 
-    if (computerMoveIndex === -1) {
-      return { success: true, gameOver: false };
+      if (computerMoveIndex === -1) {
+        console.log(`⚠️ No valid moves available`);
+        return { success: true, gameOver: false };
+      }
+
+      // Validate move index
+      if (computerMoveIndex < 0 || computerMoveIndex >= 9) {
+        console.error(`❌ Invalid computer move index: ${computerMoveIndex}`);
+        return { success: false, error: 'Invalid move index' };
+      }
+
+      // Make computer's move
+      const symbol = 'O';
+      this.board[computerMoveIndex] = symbol;
+      this.moves.push({ playerId: 'COMPUTER', cellIndex: computerMoveIndex, symbol });
+      console.log(`🤖 Computer moved to cell ${computerMoveIndex}`);
+
+      // Check for winner
+      if (this.checkWinner()) {
+        this.winner = 'COMPUTER';
+        console.log(`🏆 COMPUTER WINS!`);
+        return { success: true, gameOver: true, winner: this.winner, isComputerMove: true };
+      }
+
+      // Check for draw
+      if (this.board.every(cell => cell !== EMPTY_CELL)) {
+        console.log(`🤝 DRAW!`);
+        return { success: true, gameOver: true, winner: null, isDraw: true, isComputerMove: true };
+      }
+
+      // Switch back to player
+      this.currentPlayerIndex = 0;
+      console.log(`✅ Computer move complete, player's turn`);
+      return { success: true, gameOver: false, isComputerMove: true };
+    } catch (error) {
+      console.error(`❌ Error in computerMove:`, error.message);
+      return { success: false, error: error.message };
     }
-
-    // Make computer's move
-    const symbol = 'O';
-    this.board[computerMoveIndex] = symbol;
-    this.moves.push({ playerId: 'COMPUTER', cellIndex: computerMoveIndex, symbol });
-
-    // Check for winner
-    if (this.checkWinner()) {
-      this.winner = 'COMPUTER';
-      return { success: true, gameOver: true, winner: this.winner, isComputerMove: true };
-    }
-
-    // Check for draw
-    if (this.board.every(cell => cell !== EMPTY_CELL)) {
-      return { success: true, gameOver: true, winner: null, isDraw: true, isComputerMove: true };
-    }
-
-    // Switch back to player
-    this.currentPlayerIndex = 0;
-    return { success: true, gameOver: false, isComputerMove: true };
   }
 
   /**
@@ -217,6 +251,7 @@ export class TicTacToeGame {
   getState() {
     return {
       roomId: this.roomId,
+      gameType: this.gameType,  // ✅ INCLUDE THIS
       board: this.board,
       currentPlayer: this.players[this.currentPlayerIndex],
       players: this.players,
@@ -224,6 +259,7 @@ export class TicTacToeGame {
       isFull: this.board.every(cell => cell !== EMPTY_CELL),
       moveCount: this.moves.length,
       gameMode: this.gameMode,
+      status: this.status,  // ✅ INCLUDE THIS
     };
   }
 
@@ -235,5 +271,6 @@ export class TicTacToeGame {
     this.currentPlayerIndex = 0;
     this.winner = null;
     this.moves = [];
+    this.status = 'waiting';  // ✅ ADD THIS
   }
 }

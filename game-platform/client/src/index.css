@@ -8,3 +8,39 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Tailwind table styling */
+table {
+  @apply w-full border-collapse;
+}
+
+tbody tr:nth-child(odd) {
+  @apply bg-gray-800;
+}
+
+tbody tr:nth-child(even) {
+  @apply bg-gray-700;  /* Changed from bg-gray-750 to bg-gray-700 */
+}
+
+tbody tr:hover {
+  @apply bg-gray-600 transition-colors;  /* Changed from bg-gray-700 */
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.7);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 1);
+}
